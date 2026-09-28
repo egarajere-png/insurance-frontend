@@ -121,8 +121,8 @@ export function CustomerFormModal({ isOpen, onClose, customer, onSaved }: Custom
             <option value="" disabled>
               Select gender
             </option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
+            <option value="M">M</option>
+            <option value="F">F</option>
           </Select>
         </FormField>
 

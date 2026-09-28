@@ -6,7 +6,9 @@ export const customerSchema = z.object({
   idNumber: z.string().min(1, "ID number is required"),
   pinNumber: z.string().min(1, "KRA PIN is required"),
   occupation: z.string().min(1, "Occupation is required"),
-  gender: z.string().min(1, "Gender is required"),
+  gender: z.enum(["M", "F"], {
+    message: "Select a valid gender",
+  }),
   mobileNumber: z.string().min(10, "Enter a valid mobile number"),
   emailAddress: z.string().email("Enter a valid email address"),
   postalAddress: z.string().min(1, "Postal address is required"),
