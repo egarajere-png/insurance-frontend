@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldCheck, FileText, ShieldHalf, X } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, FileText, X } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { cn } from "../../lib/cn";
+import abcLogo from "../../assets/abc-logo.png";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -20,10 +21,10 @@ function MobileDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       <div className="relative flex h-full w-64 flex-col bg-navy-900">
         <div className="flex h-16 items-center justify-between px-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-brand-500">
-              <ShieldHalf className="size-5 text-white" />
+            <div className="flex size-9 items-center justify-center rounded-lg bg-white p-1">
+              <img src={abcLogo} alt="ABC Bank" className="size-full object-contain" />
             </div>
-            <p className="text-sm font-semibold text-white">Insurance</p>
+            <p className="text-sm font-semibold text-white">ABC Bank Insurance</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white">
             <X className="size-5" />

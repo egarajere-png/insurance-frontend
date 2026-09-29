@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldCheck, FileText, ShieldHalf } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, FileText } from "lucide-react";
 import { cn } from "../../lib/cn";
+import abcLogo from "../../assets/abc-logo.png";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -13,11 +14,11 @@ export function Sidebar() {
   return (
     <aside className="hidden w-64 shrink-0 flex-col bg-navy-900 lg:flex">
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <div className="flex size-9 items-center justify-center rounded-lg bg-brand-500">
-          <ShieldHalf className="size-5 text-white" />
+        <div className="flex size-9 items-center justify-center rounded-lg bg-white p-1">
+          <img src={abcLogo} alt="ABC Bank" className="size-full object-contain" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white leading-tight">Insurance</p>
+          <p className="text-sm font-semibold text-white leading-tight">ABC Bank Insurance</p>
           <p className="text-xs text-slate-400 leading-tight">Management System</p>
         </div>
       </div>

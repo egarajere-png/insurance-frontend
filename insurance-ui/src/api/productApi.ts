@@ -14,8 +14,11 @@ export const productApi = {
     const { data } = await apiClient.post<Product>("/product", { id: 0, ...payload });
     return data;
   },
-  update: async (payload: ProductPayload): Promise<Product> => {
-    const { data } = await apiClient.post<Product>("/product", payload);
+  update: async (id: number, payload: ProductPayload): Promise<Product> => {
+    const { data } = await apiClient.put<Product>(`/product/${id}`, payload);
     return data;
+  },
+  remove: async (id: number): Promise<void> => {
+    await apiClient.delete(`/product/${id}`);
   },
 };

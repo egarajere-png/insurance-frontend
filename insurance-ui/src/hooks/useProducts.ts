@@ -29,3 +29,22 @@ export function useCreateProduct() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.all }),
   });
 }
+
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: ProductPayload }) => productApi.update(id, payload),
+    onSuccess: (product) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.byId(product.id) });
+    },
+  });
+}
+
+export function useDeleteProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => productApi.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: productKeys.all }),
+  });
+}

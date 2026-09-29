@@ -9,6 +9,10 @@ export type PersonType = "NOMINATED" | "DEPENDANT" | "BENEFICIARY" | "BOTH";
 
 export type Plan = "Basic" | "Pro";
 
+export type Gender = "Male" | "Female" | "Other";
+
+export type ApplicationStatus = "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+
 export interface Customer {
   id: number;
   name: string;
@@ -68,12 +72,28 @@ export interface CustomerProduct {
   healthStatus: string | null;
   specificDiasgnosis: boolean;
   specificDiasgnosisStatus: string | null;
+  status: ApplicationStatus;
+  submittedOn: string | null;
+  reviewedOn: string | null;
+  /** Admin who approved/rejected — "who approved it" for the audit view. */
+  reviewedBy: string | null;
+  reviewNotes: string | null;
   createdOn: string | null;
+  /** Who initiated the application — "who initialised it" for the audit view. */
   createdBy: string | null;
   edittedOn: string | null;
   edittedBy: string | null;
   customer: Customer;
   product: Product;
+}
+
+export interface DashboardStats {
+  totalCustomers: number;
+  totalProducts: number;
+  totalApplications: number;
+  pendingReview: number;
+  approved: number;
+  rejected: number;
 }
 
 /** Request payloads — match the *Dto classes the POST endpoints accept. */

@@ -32,4 +32,7 @@ export const dependantApi = {
     const { data } = await apiClient.post<Dependant>("/dependant", payload);
     return data;
   },
+  remove: async (id: number): Promise<void> => {
+    await apiClient.delete(`/dependant/${id}`);
+  },
 };

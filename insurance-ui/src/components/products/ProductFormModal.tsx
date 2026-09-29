@@ -8,13 +8,16 @@ import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { Textarea } from "../ui/Textarea";
 import { productSchema, type ProductFormValues } from "../../schemas/product";
-import { useCreateProduct } from "../../hooks/useProducts";
+import { useCreateProduct, useUpdateProduct } from "../../hooks/useProducts";
 import { useToast } from "../../hooks/useToast";
 import { getErrorMessage } from "../../api/client";
+import type { Product } from "../../types/insurance";
 
 interface ProductFormModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** When set, the modal edits this product instead of creating a new one. */
+  product?: Product;
   onSaved?: () => void;
 }
 
@@ -29,9 +32,11 @@ const emptyValues: ProductFormValues = {
   premiumAdditionalAdultChild: 0,
 };
 
-export function ProductFormModal({ isOpen, onClose, onSaved }: ProductFormModalProps) {
+export function ProductFormModal({ isOpen, onClose, product, onSaved }: ProductFormModalProps) {
+  const isEdit = !!product;
   const { showToast } = useToast();
   const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
 
   const {
     register,
@@ -44,13 +49,31 @@ export function ProductFormModal({ isOpen, onClose, onSaved }: ProductFormModalP
   });
 
   useEffect(() => {
-    if (isOpen) reset(emptyValues);
-  }, [isOpen, reset]);
+    if (!isOpen) return;
+    if (product) {
+      reset({
+        name: product.name,
+        description: product.description,
+        plan: product.plan,
+        benefit: product.benefit,
+        benefitChild: product.benefitChild,
+        premium: product.premium,
+        premiumAdditionalChild: product.premiumAdditionalChild,
+        premiumAdditionalAdultChild: product.premiumAdditionalAdultChild,
+      });
+    } else {
+      reset(emptyValues);
+    }
+  }, [isOpen, product, reset]);
+
+  const isSaving = createProduct.isPending || updateProduct.isPending;
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      const product = await createProduct.mutateAsync(values);
-      showToast({ tone: "success", title: "Product created", description: product.name });
+      const saved = isEdit
+        ? await updateProduct.mutateAsync({ id: product!.id, payload: values })
+        : await createProduct.mutateAsync(values);
+      showToast({ tone: "success", title: isEdit ? "Product updated" : "Product created", description: saved.name });
       onSaved?.();
       onClose();
     } catch (err) {
@@ -62,15 +85,15 @@ export function ProductFormModal({ isOpen, onClose, onSaved }: ProductFormModalP
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="New Insurance Product"
+      title={isEdit ? "Edit Insurance Product" : "New Insurance Product"}
       size="lg"
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={createProduct.isPending}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} isLoading={createProduct.isPending}>
-            Create Product
+          <Button onClick={onSubmit} isLoading={isSaving}>
+            {isEdit ? "Save Changes" : "Create Product"}
           </Button>
         </>
       }

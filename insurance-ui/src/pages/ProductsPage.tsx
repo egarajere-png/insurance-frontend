@@ -5,8 +5,13 @@ import { Card, CardBody } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Skeleton } from "../components/ui/Skeleton";
+import { ConfirmationModal } from "../components/ui/ConfirmationModal";
 import { ProductFormModal } from "../components/products/ProductFormModal";
-import { useProducts } from "../hooks/useProducts";
+import { ProductDetailModal } from "../components/products/ProductDetailModal";
+import { useProducts, useDeleteProduct } from "../hooks/useProducts";
+import { useToast } from "../hooks/useToast";
+import { getErrorMessage } from "../api/client";
+import type { Product } from "../types/insurance";
 
 function currency(n: number) {
   return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
@@ -14,7 +19,25 @@ function currency(n: number) {
 
 export default function ProductsPage() {
   const { data: products, isLoading, isError } = useProducts();
+  const deleteProduct = useDeleteProduct();
+  const { showToast } = useToast();
+
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+
+  const handleDelete = async () => {
+    if (!deletingProduct) return;
+    try {
+      await deleteProduct.mutateAsync(deletingProduct.id);
+      showToast({ tone: "success", title: "Product deleted" });
+      setDeletingProduct(null);
+      setViewingProduct(null);
+    } catch (err) {
+      showToast({ tone: "error", title: "Couldn't delete product", description: getErrorMessage(err) });
+    }
+  };
 
   return (
     <div>
@@ -22,13 +45,52 @@ export default function ProductsPage() {
         title="Insurance Products"
         description="Available plans customers can apply for."
         action={
-          <Button onClick={() => setIsFormOpen(true)}>
+          <Button
+            onClick={() => {
+              setEditingProduct(null);
+              setIsFormOpen(true);
+            }}
+          >
             <Plus className="size-4" /> New Product
           </Button>
         }
       />
 
-      <ProductFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} />
+      <ProductFormModal
+        isOpen={isFormOpen}
+        product={editingProduct ?? undefined}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingProduct(null);
+        }}
+      />
+
+      <ProductDetailModal
+        isOpen={!!viewingProduct}
+        product={viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        onEdit={() => {
+          setEditingProduct(viewingProduct);
+          setViewingProduct(null);
+          setIsFormOpen(true);
+        }}
+        onDelete={() => setDeletingProduct(viewingProduct)}
+      />
+
+      <ConfirmationModal
+        isOpen={!!deletingProduct}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={handleDelete}
+        title="Delete this product?"
+        description={
+          deletingProduct
+            ? `"${deletingProduct.name}" will be permanently removed. This only works if no applications reference it.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleteProduct.isPending}
+      />
 
       {isLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -87,7 +149,7 @@ export default function ProductsPage() {
                   </div>
                 </dl>
 
-                <Button variant="outline" className="mt-4 w-full">
+                <Button variant="outline" className="mt-4 w-full" onClick={() => setViewingProduct(product)}>
                   View Details
                 </Button>
               </CardBody>

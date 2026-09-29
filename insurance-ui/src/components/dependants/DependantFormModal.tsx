@@ -7,17 +7,19 @@ import { FormField } from "../ui/FormField";
 import { Input } from "../ui/Input";
 import { Select } from "../ui/Select";
 import { dependantSchema, type DependantFormValues } from "../../schemas/dependant";
-import { useCreateDependant } from "../../hooks/useDependants";
+import { useCreateDependant, useUpdateDependant } from "../../hooks/useDependants";
 import { useToast } from "../../hooks/useToast";
 import { getErrorMessage } from "../../api/client";
-import type { PersonType } from "../../types/insurance";
+import type { Dependant, PersonType } from "../../types/insurance";
 
 interface DependantFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: number;
-  /** Which tab opened this modal — used to pre-select and label the right type. */
+  /** Which tab opened this modal — used to pre-select and label the right type when adding. */
   context: "dependant" | "beneficiary";
+  /** When set, the modal edits this record instead of creating a new one. */
+  dependant?: Dependant;
   onSaved?: () => void;
 }
 
@@ -31,9 +33,11 @@ const emptyValues: DependantFormValues = {
   type: "DEPENDANT",
 };
 
-export function DependantFormModal({ isOpen, onClose, customerId, context, onSaved }: DependantFormModalProps) {
+export function DependantFormModal({ isOpen, onClose, customerId, context, dependant, onSaved }: DependantFormModalProps) {
+  const isEdit = !!dependant;
   const { showToast } = useToast();
   const createDependant = useCreateDependant(customerId);
+  const updateDependant = useUpdateDependant(customerId);
 
   const {
     register,
@@ -46,19 +50,32 @@ export function DependantFormModal({ isOpen, onClose, customerId, context, onSav
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+    if (dependant) {
+      reset({
+        name: dependant.name ?? "",
+        dateOfBirth: dependant.dateOfBirth?.slice(0, 10) ?? "",
+        idNumber: dependant.idNumber ?? "",
+        relationship: dependant.relationship ?? "",
+        mobileNumber: dependant.mobileNumber ?? "",
+        email: dependant.email ?? "",
+        type: dependant.personType,
+      });
+    } else {
       reset({ ...emptyValues, type: context === "beneficiary" ? "BENEFICIARY" : "DEPENDANT" });
     }
-  }, [isOpen, context, reset]);
+  }, [isOpen, context, dependant, reset]);
+
+  const isSaving = createDependant.isPending || updateDependant.isPending;
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await createDependant.mutateAsync({
-        ...values,
-        type: values.type as PersonType,
-        customerId,
-      });
-      showToast({ tone: "success", title: `${context === "beneficiary" ? "Beneficiary" : "Dependant"} added` });
+      if (isEdit) {
+        await updateDependant.mutateAsync({ id: dependant!.id, ...values, type: values.type as PersonType, customerId });
+      } else {
+        await createDependant.mutateAsync({ ...values, type: values.type as PersonType, customerId });
+      }
+      showToast({ tone: "success", title: isEdit ? "Saved" : `${context === "beneficiary" ? "Beneficiary" : "Dependant"} added` });
       onSaved?.();
       onClose();
     } catch (err) {
@@ -70,14 +87,14 @@ export function DependantFormModal({ isOpen, onClose, customerId, context, onSav
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={context === "beneficiary" ? "Add Beneficiary" : "Add Dependant"}
+      title={isEdit ? "Edit Record" : context === "beneficiary" ? "Add Beneficiary" : "Add Dependant"}
       description="This is stored on the same record as dependants, distinguished by type."
       footer={
         <>
-          <Button variant="outline" onClick={onClose} disabled={createDependant.isPending}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={onSubmit} isLoading={createDependant.isPending}>
+          <Button onClick={onSubmit} isLoading={isSaving}>
             Save
           </Button>
         </>
@@ -92,7 +109,7 @@ export function DependantFormModal({ isOpen, onClose, customerId, context, onSav
           <Select {...register("type")} hasError={!!errors.type}>
             <option value="DEPENDANT">Dependant</option>
             <option value="BENEFICIARY">Beneficiary</option>
-            <option value="NOMINATED">Nominated (required before PDF generation)</option>
+            <option value="NOMINATED">Nominated (required before approval)</option>
             <option value="BOTH">Both (Dependant &amp; Beneficiary)</option>
           </Select>
         </FormField>

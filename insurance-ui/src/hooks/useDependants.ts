@@ -33,3 +33,25 @@ export function useCreateDependant(customerId: number) {
     },
   });
 }
+
+export function useUpdateDependant(customerId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: DependantPayload) => dependantApi.update(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dependantKeys.forCustomer(customerId) });
+      queryClient.invalidateQueries({ queryKey: dependantKeys.beneficiaries(customerId) });
+    },
+  });
+}
+
+export function useDeleteDependant(customerId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => dependantApi.remove(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: dependantKeys.forCustomer(customerId) });
+      queryClient.invalidateQueries({ queryKey: dependantKeys.beneficiaries(customerId) });
+    },
+  });
+}

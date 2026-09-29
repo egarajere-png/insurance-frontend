@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, FileDown, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { Card, CardBody } from "../components/ui/Card";
@@ -13,10 +13,9 @@ import { SelectProductStep } from "../components/applications/SelectProductStep"
 import { HealthInfoStep } from "../components/applications/HealthInfoStep";
 import { ReviewStep } from "../components/applications/ReviewStep";
 import { useCustomer } from "../hooks/useCustomers";
-import { useCreateApplication, useProcessApplication } from "../hooks/useApplications";
+import { useCreateApplication } from "../hooks/useApplications";
 import { useToast } from "../hooks/useToast";
 import { getErrorMessage } from "../api/client";
-import { applicationApi } from "../api/applicationApi";
 import type { Customer, Product } from "../types/insurance";
 import type { HealthInfoFormValues } from "../schemas/application";
 
@@ -42,14 +41,11 @@ export default function ApplicationWizardPage() {
   const [health, setHealth] = useState<HealthInfoFormValues>(defaultHealth);
   const [isCustomerFormOpen, setIsCustomerFormOpen] = useState(false);
   const [isDependantFormOpen, setIsDependantFormOpen] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const [pdfState, setPdfState] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const effectiveCustomer = customer ?? prefillCustomer ?? null;
 
   const createApplication = useCreateApplication(effectiveCustomer?.emailAddress ?? "");
-  const processApplication = useProcessApplication();
 
   const canProceed = () => {
     if (step === 0) return !!effectiveCustomer;
@@ -68,32 +64,14 @@ export default function ApplicationWizardPage() {
         specificDiasgnosis: health.specificDiasgnosis === "yes",
         specificDiasgnosisStatus: health.specificDiasgnosisStatus,
       });
-      setSubmittedEmail(effectiveCustomer.emailAddress);
+      setSubmitted(true);
       showToast({ tone: "success", title: "Application submitted", description: `${effectiveCustomer.name} — ${product.name}` });
     } catch (err) {
       showToast({ tone: "error", title: "Couldn't submit application", description: getErrorMessage(err) });
     }
   };
 
-  const handleGeneratePdf = async () => {
-    if (!submittedEmail) return;
-    setPdfState("loading");
-    try {
-      await processApplication.mutateAsync(submittedEmail);
-      const url = await applicationApi.getPdfBlobUrl(submittedEmail);
-      setPdfUrl(url);
-      setPdfState("ready");
-    } catch (err) {
-      setPdfState("error");
-      showToast({
-        tone: "error",
-        title: "Couldn't generate PDF",
-        description: `${getErrorMessage(err)} — this usually means the customer has no dependant typed "Nominated" yet.`,
-      });
-    }
-  };
-
-  if (submittedEmail && effectiveCustomer && product) {
+  if (submitted && effectiveCustomer && product) {
     return (
       <div className="mx-auto max-w-lg py-10 text-center">
         <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-50 text-success-700">
@@ -106,20 +84,14 @@ export default function ApplicationWizardPage() {
 
         <Card className="mt-6 text-left">
           <CardBody>
-            <p className="text-sm font-medium text-slate-700">Application document</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Generate the application PDF. This requires the customer to have a dependant typed "Nominated" on file.
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <Button onClick={handleGeneratePdf} isLoading={pdfState === "loading"}>
-                <FileDown className="size-4" /> Generate &amp; View PDF
-              </Button>
-              {pdfState === "ready" && pdfUrl && (
-                <a href={pdfUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand-600 hover:text-brand-700">
-                  Open PDF in new tab
-                </a>
-              )}
+            <div className="flex items-center gap-2 text-warning-700">
+              <Clock className="size-4" />
+              <p className="text-sm font-medium">Pending Review</p>
             </div>
+            <p className="mt-1 text-sm text-slate-500">
+              The application now needs an admin decision before the insurance document can be issued. Make sure the customer
+              has a dependant typed "Nominated" on file — it's required before this can be approved.
+            </p>
           </CardBody>
         </Card>
 
@@ -128,7 +100,7 @@ export default function ApplicationWizardPage() {
             <Button variant="outline">Back to Customer</Button>
           </Link>
           <Link to="/applications">
-            <Button variant="ghost">Go to Applications</Button>
+            <Button>Review in Applications</Button>
           </Link>
         </div>
       </div>

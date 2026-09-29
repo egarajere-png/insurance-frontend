@@ -9,10 +9,17 @@ import { Button } from "../components/ui/Button";
 import { DataTable, type Column } from "../components/ui/DataTable";
 import { CustomerFormModal } from "../components/customers/CustomerFormModal";
 import { DependantFormModal } from "../components/dependants/DependantFormModal";
+import { ApplicationDetailModal } from "../components/applications/ApplicationDetailModal";
 import { useCustomer } from "../hooks/useCustomers";
 import { useCustomerDependants, useCustomerBeneficiaries } from "../hooks/useDependants";
 import { useCustomerApplications } from "../hooks/useApplications";
 import type { Dependant, CustomerProduct } from "../types/insurance";
+
+function statusTone(status: CustomerProduct["status"]) {
+  if (status === "APPROVED") return "success" as const;
+  if (status === "REJECTED") return "danger" as const;
+  return "warning" as const;
+}
 
 const TABS = ["Dependants", "Beneficiaries", "Applications"] as const;
 
@@ -22,6 +29,8 @@ export default function CustomerDetailPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Dependants");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [dependantModal, setDependantModal] = useState<"dependant" | "beneficiary" | null>(null);
+  const [editingDependant, setEditingDependant] = useState<Dependant | null>(null);
+  const [selectedApplication, setSelectedApplication] = useState<CustomerProduct | null>(null);
 
   const { data: dependants, isLoading: dependantsLoading } = useCustomerDependants(customer?.id);
   const { data: beneficiaries, isLoading: beneficiariesLoading } = useCustomerBeneficiaries(customer?.id);
@@ -33,20 +42,34 @@ export default function CustomerDetailPage() {
     { key: "type", header: "Type", render: (d) => <Badge tone="brand">{d.personType}</Badge> },
     { key: "idNumber", header: "ID Number", render: (d) => d.idNumber || "—" },
     { key: "mobile", header: "Mobile", render: (d) => d.mobileNumber || "—" },
+    {
+      key: "edit",
+      header: "",
+      className: "text-right",
+      render: (d) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingDependant(d);
+            setDependantModal(d.personType === "BENEFICIARY" ? "beneficiary" : "dependant");
+          }}
+        >
+          <Pencil className="size-3.5" />
+        </Button>
+      ),
+    },
   ];
 
   const applicationColumns: Column<CustomerProduct>[] = [
     { key: "product", header: "Product", render: (a) => <span className="font-medium text-slate-900">{a.product?.name}</span> },
     { key: "plan", header: "Plan", render: (a) => <Badge tone="info">{a.product?.plan}</Badge> },
+    { key: "status", header: "Status", render: (a) => <Badge tone={statusTone(a.status)}>{a.status.replace("_", " ")}</Badge> },
     {
       key: "health",
       header: "Health",
       render: (a) => (a.inGoodHealth ? <Badge tone="success">Good health</Badge> : <Badge tone="warning">Flagged</Badge>),
-    },
-    {
-      key: "payment",
-      header: "Payment",
-      render: (a) => (a.paymentMade ? <Badge tone="success">Paid</Badge> : <Badge tone="neutral">Not yet implemented</Badge>),
     },
   ];
 
@@ -97,11 +120,16 @@ export default function CustomerDetailPage() {
       {dependantModal && (
         <DependantFormModal
           isOpen={!!dependantModal}
-          onClose={() => setDependantModal(null)}
+          onClose={() => {
+            setDependantModal(null);
+            setEditingDependant(null);
+          }}
           customerId={customer.id}
           context={dependantModal}
+          dependant={editingDependant ?? undefined}
         />
       )}
+      <ApplicationDetailModal isOpen={!!selectedApplication} application={selectedApplication} onClose={() => setSelectedApplication(null)} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1 h-fit">
@@ -153,12 +181,28 @@ export default function CustomerDetailPage() {
               ))}
             </div>
             {tab === "Dependants" && (
-              <Button size="sm" variant="outline" className="mb-2" onClick={() => setDependantModal("dependant")}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mb-2"
+                onClick={() => {
+                  setEditingDependant(null);
+                  setDependantModal("dependant");
+                }}
+              >
                 <UserPlus className="size-3.5" /> Add Dependant
               </Button>
             )}
             {tab === "Beneficiaries" && (
-              <Button size="sm" variant="outline" className="mb-2" onClick={() => setDependantModal("beneficiary")}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mb-2"
+                onClick={() => {
+                  setEditingDependant(null);
+                  setDependantModal("beneficiary");
+                }}
+              >
                 <UserPlus className="size-3.5" /> Add Beneficiary
               </Button>
             )}
@@ -188,6 +232,7 @@ export default function CustomerDetailPage() {
               data={applications}
               isLoading={applicationsLoading}
               rowKey={(a) => a.id}
+              onRowClick={(a) => setSelectedApplication(a)}
               emptyTitle="No applications yet"
               emptyDescription="This customer hasn't applied for an insurance product."
             />

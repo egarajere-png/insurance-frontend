@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, Pencil } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { DataTable, type Column } from "../components/ui/DataTable";
@@ -14,6 +14,7 @@ export default function CustomersPage() {
   const { data: customers, isLoading, isError } = useCustomers();
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const navigate = useNavigate();
 
   const filtered = useMemo(() => {
@@ -40,6 +41,24 @@ export default function CustomersPage() {
       header: "Dependants",
       render: (c) => <Badge tone="brand">{c.dependantsNo ?? 0}</Badge>,
     },
+    {
+      key: "edit",
+      header: "",
+      className: "text-right",
+      render: (c) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditingCustomer(c);
+            setIsFormOpen(true);
+          }}
+        >
+          <Pencil className="size-3.5" /> Edit
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -48,7 +67,13 @@ export default function CustomersPage() {
         title="Customers"
         description="View and manage customer records."
         action={
-          <Button size="md" onClick={() => setIsFormOpen(true)}>
+          <Button
+            size="md"
+            onClick={() => {
+              setEditingCustomer(null);
+              setIsFormOpen(true);
+            }}
+          >
             <UserPlus className="size-4" />
             New Customer
           </Button>
@@ -57,8 +82,14 @@ export default function CustomersPage() {
 
       <CustomerFormModal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSaved={(customer) => navigate(`/customers/${customer.emailAddress}`)}
+        customer={editingCustomer ?? undefined}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingCustomer(null);
+        }}
+        onSaved={(customer) => {
+          if (!editingCustomer) navigate(`/customers/${customer.emailAddress}`);
+        }}
       />
 
       <Card>
