@@ -109,7 +109,7 @@ export function DependantFormModal({ isOpen, onClose, customerId, context, depen
           <Select {...register("type")} hasError={!!errors.type}>
             <option value="DEPENDANT">Dependant</option>
             <option value="BENEFICIARY">Beneficiary</option>
-            <option value="NOMINATED">Nominated (required before approval)</option>
+            <option value="NOMINATED">Nominated</option>
             <option value="BOTH">Both (Dependant &amp; Beneficiary)</option>
           </Select>
         </FormField>

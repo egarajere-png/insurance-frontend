@@ -89,8 +89,7 @@ export default function ApplicationWizardPage() {
               <p className="text-sm font-medium">Pending Review</p>
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              The application now needs an admin decision before the insurance document can be issued. Make sure the customer
-              has a dependant typed "Nominated" on file — it's required before this can be approved.
+              The application now needs an admin decision before the insurance document can be issued.
             </p>
           </CardBody>
         </Card>

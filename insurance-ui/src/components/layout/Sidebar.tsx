@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldCheck, FileText } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, FileText, ExternalLink } from "lucide-react";
 import { cn } from "../../lib/cn";
 import abcLogo from "../../assets/abc-logo.png";
 
@@ -43,6 +43,18 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="px-3 pb-2">
+        <a
+          href="/portal"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-navy-800 hover:text-white"
+        >
+          <ExternalLink className="size-4.5 shrink-0" />
+          Customer Portal (preview)
+        </a>
+      </div>
 
       <div className="border-t border-navy-800 px-5 py-4">
         <div className="flex items-center gap-2.5">
