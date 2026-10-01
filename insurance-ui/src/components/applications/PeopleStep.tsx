@@ -2,30 +2,30 @@ import { UserPlus } from "lucide-react";
 import { Card, CardBody } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
-import { useCustomerDependants, useCustomerBeneficiaries } from "../../hooks/useDependants";
+import { useCustomerDependants } from "../../hooks/useDependants";
 
-export function DependantsReviewStep({
-  customerId,
-  kind,
-  onAdd,
-}: {
-  customerId: number;
-  kind: "dependant" | "beneficiary";
-  onAdd: () => void;
-}) {
-  const dependants = useCustomerDependants(kind === "dependant" ? customerId : undefined);
-  const beneficiaries = useCustomerBeneficiaries(kind === "beneficiary" ? customerId : undefined);
-  const { data, isLoading } = kind === "dependant" ? dependants : beneficiaries;
+const TYPE_LABEL: Record<string, string> = {
+  DEPENDANT: "Dependant",
+  BENEFICIARY: "Beneficiary",
+  NOMINATED: "Nominated",
+  BOTH: "Dependant & Beneficiary",
+};
+
+/**
+ * Dependants and beneficiaries are the same underlying record (just a
+ * relation type) — this is one combined list with one "Add Person" action,
+ * rather than treating them as two separate processes.
+ */
+export function PeopleStep({ customerId, onAdd }: { customerId: number; onAdd: () => void }) {
+  const { data, isLoading } = useCustomerDependants(customerId);
 
   return (
     <Card>
       <CardBody>
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm font-medium text-slate-700">
-            {kind === "dependant" ? "Dependants on file" : "Beneficiaries on file"}
-          </p>
+          <p className="text-sm font-medium text-slate-700">Dependants &amp; Beneficiaries on file</p>
           <Button size="sm" variant="outline" onClick={onAdd}>
-            <UserPlus className="size-3.5" /> Add {kind === "dependant" ? "Dependant" : "Beneficiary"}
+            <UserPlus className="size-3.5" /> Add Person
           </Button>
         </div>
 
@@ -45,7 +45,7 @@ export function DependantsReviewStep({
                   <p className="font-medium text-slate-900">{d.name}</p>
                   <p className="text-slate-500">{d.relationship}</p>
                 </div>
-                <Badge tone="brand">{d.personType}</Badge>
+                <Badge tone="brand">{TYPE_LABEL[d.personType] ?? d.personType}</Badge>
               </li>
             ))}
           </ul>

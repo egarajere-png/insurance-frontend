@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardBody } from "../ui/Card";
 import { FormField } from "../ui/FormField";
 import { Select } from "../ui/Select";
@@ -7,7 +8,8 @@ import type { HealthInfoFormValues } from "../../schemas/application";
 /**
  * Small, self-contained form — plain controlled state instead of react-hook-form,
  * since this step's values just need to flow into the wizard's own state on every
- * change (the wizard already validates completeness via the Review step).
+ * change. Required-reason errors show once the person has interacted with the
+ * field (or tried to move on), not before.
  */
 export function HealthInfoStep({
   value,
@@ -16,8 +18,13 @@ export function HealthInfoStep({
   value: HealthInfoFormValues;
   onChange: (v: HealthInfoFormValues) => void;
 }) {
+  const [touched, setTouched] = useState({ healthStatus: false, specificDiasgnosisStatus: false });
+
   const set = <K extends keyof HealthInfoFormValues>(key: K, val: HealthInfoFormValues[K]) =>
     onChange({ ...value, [key]: val });
+
+  const healthStatusMissing = value.inGoodHealth === "no" && !value.healthStatus.trim();
+  const diagnosisStatusMissing = value.specificDiasgnosis === "yes" && !value.specificDiasgnosisStatus.trim();
 
   return (
     <Card>
@@ -30,11 +37,17 @@ export function HealthInfoStep({
         </FormField>
 
         {value.inGoodHealth === "no" && (
-          <FormField label="Describe the health status" hint="Details the backend will store as free text">
+          <FormField
+            label="Describe the health status"
+            hint="Required — this is stored as free text"
+            error={touched.healthStatus && healthStatusMissing ? "Please describe the health status." : undefined}
+          >
             <Textarea
               rows={3}
               value={value.healthStatus}
               onChange={(e) => set("healthStatus", e.target.value)}
+              onBlur={() => setTouched((t) => ({ ...t, healthStatus: true }))}
+              hasError={touched.healthStatus && healthStatusMissing}
               placeholder="e.g. Managing hypertension, on medication"
             />
           </FormField>
@@ -48,11 +61,17 @@ export function HealthInfoStep({
         </FormField>
 
         {value.specificDiasgnosis === "yes" && (
-          <FormField label="Diagnosis details">
+          <FormField
+            label="Diagnosis details"
+            hint="Required"
+            error={touched.specificDiasgnosisStatus && diagnosisStatusMissing ? "Please provide diagnosis details." : undefined}
+          >
             <Textarea
               rows={3}
               value={value.specificDiasgnosisStatus}
               onChange={(e) => set("specificDiasgnosisStatus", e.target.value)}
+              onBlur={() => setTouched((t) => ({ ...t, specificDiasgnosisStatus: true }))}
+              hasError={touched.specificDiasgnosisStatus && diagnosisStatusMissing}
               placeholder="Describe the diagnosis"
             />
           </FormField>

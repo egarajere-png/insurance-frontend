@@ -1,14 +1,23 @@
-import { Check, ShieldCheck } from "lucide-react";
+import { Check, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 import { Card, CardBody } from "../ui/Card";
 import { Badge } from "../ui/Badge";
 import { useProducts } from "../../hooks/useProducts";
-import type { Product } from "../../types/insurance";
+import type { CustomerProduct, Product } from "../../types/insurance";
 
 function currency(n: number) {
   return new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(n);
 }
 
-export function SelectProductStep({ selected, onSelect }: { selected: Product | null; onSelect: (p: Product) => void }) {
+export function SelectProductStep({
+  selected,
+  onSelect,
+  existingApplications,
+}: {
+  selected: Product | null;
+  onSelect: (p: Product) => void;
+  /** The customer's own applications, if known — used to block re-applying for the same product. */
+  existingApplications?: CustomerProduct[];
+}) {
   const { data: products, isLoading } = useProducts();
 
   if (isLoading) return <p className="py-8 text-center text-sm text-slate-500">Loading products…</p>;
@@ -23,13 +32,28 @@ export function SelectProductStep({ selected, onSelect }: { selected: Product | 
     );
   }
 
+  const activeByProductId = new Map<number, CustomerProduct>();
+  for (const app of existingApplications ?? []) {
+    if (app.status === "PENDING_REVIEW" || app.status === "APPROVED") {
+      activeByProductId.set(app.product.id, app);
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       {products.map((p) => {
         const isSelected = selected?.id === p.id;
+        const existing = activeByProductId.get(p.id);
+        const isBlocked = !!existing;
         return (
-          <button key={p.id} onClick={() => onSelect(p)} className="text-left">
-            <Card className={isSelected ? "ring-2 ring-brand-400" : "hover:shadow-md"}>
+          <button
+            key={p.id}
+            onClick={() => !isBlocked && onSelect(p)}
+            disabled={isBlocked}
+            className={isBlocked ? "cursor-not-allowed text-left opacity-60" : "text-left"}
+            title={isBlocked ? "Already applied for this product" : undefined}
+          >
+            <Card className={isSelected ? "ring-2 ring-brand-400" : isBlocked ? "" : "hover:shadow-md"}>
               <CardBody>
                 <div className="flex items-start justify-between">
                   <div className="flex size-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
@@ -46,6 +70,16 @@ export function SelectProductStep({ selected, onSelect }: { selected: Product | 
                   <span className="text-slate-500">Premium</span>
                   <span className="font-medium text-slate-900">{currency(p.premium)}</span>
                 </div>
+                {existing && (
+                  <div className="mt-3 flex items-center gap-1.5 rounded-md bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600">
+                    {existing.status === "APPROVED" ? (
+                      <CheckCircle2 className="size-3.5 text-success-600" />
+                    ) : (
+                      <Clock className="size-3.5 text-warning-600" />
+                    )}
+                    Already {existing.status === "APPROVED" ? "approved" : "applied — pending review"}
+                  </div>
+                )}
               </CardBody>
             </Card>
           </button>

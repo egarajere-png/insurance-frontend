@@ -11,7 +11,7 @@ import { CustomerFormModal } from "../components/customers/CustomerFormModal";
 import { DependantFormModal } from "../components/dependants/DependantFormModal";
 import { ApplicationDetailModal } from "../components/applications/ApplicationDetailModal";
 import { useCustomer } from "../hooks/useCustomers";
-import { useCustomerDependants, useCustomerBeneficiaries } from "../hooks/useDependants";
+import { useCustomerDependants } from "../hooks/useDependants";
 import { useCustomerApplications } from "../hooks/useApplications";
 import type { Dependant, CustomerProduct } from "../types/insurance";
 
@@ -21,19 +21,18 @@ function statusTone(status: CustomerProduct["status"]) {
   return "warning" as const;
 }
 
-const TABS = ["Dependants", "Beneficiaries", "Applications"] as const;
+const TABS = ["Dependants & Beneficiaries", "Applications"] as const;
 
 export default function CustomerDetailPage() {
   const { email } = useParams<{ email: string }>();
   const { data: customer, isLoading } = useCustomer(email);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Dependants");
+  const [tab, setTab] = useState<(typeof TABS)[number]>("Dependants & Beneficiaries");
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [dependantModal, setDependantModal] = useState<"dependant" | "beneficiary" | null>(null);
   const [editingDependant, setEditingDependant] = useState<Dependant | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<CustomerProduct | null>(null);
 
   const { data: dependants, isLoading: dependantsLoading } = useCustomerDependants(customer?.id);
-  const { data: beneficiaries, isLoading: beneficiariesLoading } = useCustomerBeneficiaries(customer?.id);
   const { data: applications, isLoading: applicationsLoading } = useCustomerApplications(email);
 
   const dependantColumns: Column<Dependant>[] = [
@@ -180,7 +179,7 @@ export default function CustomerDetailPage() {
                 </button>
               ))}
             </div>
-            {tab === "Dependants" && (
+            {tab === "Dependants & Beneficiaries" && (
               <Button
                 size="sm"
                 variant="outline"
@@ -190,40 +189,18 @@ export default function CustomerDetailPage() {
                   setDependantModal("dependant");
                 }}
               >
-                <UserPlus className="size-3.5" /> Add Dependant
-              </Button>
-            )}
-            {tab === "Beneficiaries" && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mb-2"
-                onClick={() => {
-                  setEditingDependant(null);
-                  setDependantModal("beneficiary");
-                }}
-              >
-                <UserPlus className="size-3.5" /> Add Beneficiary
+                <UserPlus className="size-3.5" /> Add Person
               </Button>
             )}
           </div>
 
-          {tab === "Dependants" && (
+          {tab === "Dependants & Beneficiaries" && (
             <DataTable
               columns={dependantColumns}
               data={dependants}
               isLoading={dependantsLoading}
               rowKey={(d) => d.id}
-              emptyTitle="No dependants recorded"
-            />
-          )}
-          {tab === "Beneficiaries" && (
-            <DataTable
-              columns={dependantColumns}
-              data={beneficiaries}
-              isLoading={beneficiariesLoading}
-              rowKey={(d) => d.id}
-              emptyTitle="No beneficiaries recorded"
+              emptyTitle="No dependants or beneficiaries recorded"
             />
           )}
           {tab === "Applications" && (

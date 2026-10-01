@@ -8,18 +8,19 @@ import { Stepper } from "../components/ui/Stepper";
 import { CustomerFormModal } from "../components/customers/CustomerFormModal";
 import { DependantFormModal } from "../components/dependants/DependantFormModal";
 import { SelectCustomerStep } from "../components/applications/SelectCustomerStep";
-import { DependantsReviewStep } from "../components/applications/DependantsReviewStep";
+import { PeopleStep } from "../components/applications/PeopleStep";
 import { SelectProductStep } from "../components/applications/SelectProductStep";
 import { HealthInfoStep } from "../components/applications/HealthInfoStep";
 import { ReviewStep } from "../components/applications/ReviewStep";
 import { useCustomer } from "../hooks/useCustomers";
-import { useCreateApplication } from "../hooks/useApplications";
+import { useCreateApplication, useCustomerApplications } from "../hooks/useApplications";
 import { useToast } from "../hooks/useToast";
 import { getErrorMessage } from "../api/client";
+import { isHealthStepValid } from "../schemas/application";
 import type { Customer, Product } from "../types/insurance";
 import type { HealthInfoFormValues } from "../schemas/application";
 
-const STEPS = ["Customer", "Dependants", "Beneficiaries", "Product", "Health", "Review"];
+const STEPS = ["Customer", "Dependants & Beneficiaries", "Product", "Health", "Review"];
 
 const defaultHealth: HealthInfoFormValues = {
   inGoodHealth: "yes",
@@ -44,17 +45,19 @@ export default function ApplicationWizardPage() {
   const [submitted, setSubmitted] = useState(false);
 
   const effectiveCustomer = customer ?? prefillCustomer ?? null;
+  const { data: existingApplications } = useCustomerApplications(effectiveCustomer?.emailAddress);
 
   const createApplication = useCreateApplication(effectiveCustomer?.emailAddress ?? "");
 
   const canProceed = () => {
     if (step === 0) return !!effectiveCustomer;
-    if (step === 3) return !!product;
+    if (step === 2) return !!product;
+    if (step === 3) return isHealthStepValid(health);
     return true;
   };
 
   const handleSubmit = async () => {
-    if (!effectiveCustomer || !product) return;
+    if (!effectiveCustomer || !product || !isHealthStepValid(health)) return;
     try {
       await createApplication.mutateAsync({
         customerId: effectiveCustomer.id,
@@ -121,14 +124,11 @@ export default function ApplicationWizardPage() {
           <SelectCustomerStep selected={effectiveCustomer} onSelect={setCustomer} onCreateNew={() => setIsCustomerFormOpen(true)} />
         )}
         {step === 1 && effectiveCustomer && (
-          <DependantsReviewStep customerId={effectiveCustomer.id} kind="dependant" onAdd={() => setIsDependantFormOpen(true)} />
+          <PeopleStep customerId={effectiveCustomer.id} onAdd={() => setIsDependantFormOpen(true)} />
         )}
-        {step === 2 && effectiveCustomer && (
-          <DependantsReviewStep customerId={effectiveCustomer.id} kind="beneficiary" onAdd={() => setIsDependantFormOpen(true)} />
-        )}
-        {step === 3 && <SelectProductStep selected={product} onSelect={setProduct} />}
-        {step === 4 && <HealthInfoStep value={health} onChange={setHealth} />}
-        {step === 5 && effectiveCustomer && product && <ReviewStep customer={effectiveCustomer} product={product} health={health} />}
+        {step === 2 && <SelectProductStep selected={product} onSelect={setProduct} existingApplications={existingApplications} />}
+        {step === 3 && <HealthInfoStep value={health} onChange={setHealth} />}
+        {step === 4 && effectiveCustomer && product && <ReviewStep customer={effectiveCustomer} product={product} health={health} />}
       </div>
 
       <div className="flex justify-between">
@@ -141,7 +141,7 @@ export default function ApplicationWizardPage() {
             Next <ArrowRight className="size-4" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit} isLoading={createApplication.isPending}>
+          <Button onClick={handleSubmit} isLoading={createApplication.isPending} disabled={!isHealthStepValid(health)}>
             Submit Application
           </Button>
         )}
@@ -157,7 +157,7 @@ export default function ApplicationWizardPage() {
           isOpen={isDependantFormOpen}
           onClose={() => setIsDependantFormOpen(false)}
           customerId={effectiveCustomer.id}
-          context={step === 2 ? "beneficiary" : "dependant"}
+          context="dependant"
         />
       )}
     </div>

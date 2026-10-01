@@ -1,12 +1,14 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus2, ShieldCheck, LogOut } from "lucide-react";
 import { cn } from "../lib/cn";
 import abcLogo from "../assets/abc-logo.png";
 import { usePortalAuth } from "./context/usePortalAuth";
 
 const navItems = [
-  { to: "/portal", label: "My Applications", icon: LayoutDashboard, end: true },
-  { to: "/portal/products", label: "Insurance Products", icon: ShieldCheck, end: false },
+  { to: "/portal", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/portal/applications", label: "My Applications", icon: FileText, end: true },
+  { to: "/portal/applications/new", label: "New Application", icon: FilePlus2, end: true },
+  { to: "/portal/products", label: "Insurance Products", icon: ShieldCheck, end: true },
 ];
 
 export function PortalSidebar() {

@@ -5,16 +5,23 @@ import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
+import { Select } from "../components/ui/Select";
 import { DataTable, type Column } from "../components/ui/DataTable";
 import { ApplicationDetailModal } from "../components/applications/ApplicationDetailModal";
 import { useApplications } from "../hooks/useApplications";
-import type { ApplicationStatus, CustomerProduct } from "../types/insurance";
+import type { ApplicationStatus, CustomerProduct, Plan } from "../types/insurance";
 
 const FILTERS: { label: string; value: ApplicationStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
   { label: "Pending Review", value: "PENDING_REVIEW" },
   { label: "Approved", value: "APPROVED" },
   { label: "Rejected", value: "REJECTED" },
+];
+
+const PLAN_FILTERS: { label: string; value: Plan | "ALL" }[] = [
+  { label: "All Plans", value: "ALL" },
+  { label: "Basic", value: "Basic" },
+  { label: "Pro", value: "Pro" },
 ];
 
 function statusTone(status: ApplicationStatus) {
@@ -25,6 +32,7 @@ function statusTone(status: ApplicationStatus) {
 
 export default function ApplicationsPage() {
   const [filter, setFilter] = useState<ApplicationStatus | "ALL">("ALL");
+  const [planFilter, setPlanFilter] = useState<Plan | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<CustomerProduct | null>(null);
 
@@ -33,14 +41,16 @@ export default function ApplicationsPage() {
   const filtered = useMemo(() => {
     if (!applications) return applications;
     const q = search.trim().toLowerCase();
-    if (!q) return applications;
-    return applications.filter(
-      (a) =>
+    return applications.filter((a) => {
+      if (planFilter !== "ALL" && a.product?.plan !== planFilter) return false;
+      if (!q) return true;
+      return (
         a.customer?.name?.toLowerCase().includes(q) ||
         a.customer?.emailAddress?.toLowerCase().includes(q) ||
         a.product?.name?.toLowerCase().includes(q)
-    );
-  }, [applications, search]);
+      );
+    });
+  }, [applications, search, planFilter]);
 
   const columns: Column<CustomerProduct>[] = [
     { key: "customer", header: "Customer", render: (a) => <span className="font-medium text-slate-900">{a.customer?.name}</span> },
@@ -85,14 +95,27 @@ export default function ApplicationsPage() {
               </button>
             ))}
           </div>
-          <div className="relative max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search customer or product"
-              className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
-            />
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Select
+              value={planFilter}
+              onChange={(e) => setPlanFilter(e.target.value as Plan | "ALL")}
+              className="sm:w-36"
+            >
+              {PLAN_FILTERS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </Select>
+            <div className="relative max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search customer or product"
+                className="w-full rounded-md border border-slate-300 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
+            </div>
           </div>
         </div>
 

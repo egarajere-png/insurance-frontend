@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate, NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, ShieldCheck, X } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus2, ShieldCheck, X } from "lucide-react";
 import { PortalSidebar } from "./PortalSidebar";
 import { PortalHeader } from "./PortalHeader";
 import { usePortalAuth } from "./context/usePortalAuth";
@@ -8,8 +8,10 @@ import { cn } from "../lib/cn";
 import abcLogo from "../assets/abc-logo.png";
 
 const navItems = [
-  { to: "/portal", label: "My Applications", icon: LayoutDashboard, end: true },
-  { to: "/portal/products", label: "Insurance Products", icon: ShieldCheck, end: false },
+  { to: "/portal", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/portal/applications", label: "My Applications", icon: FileText, end: true },
+  { to: "/portal/applications/new", label: "New Application", icon: FilePlus2, end: true },
+  { to: "/portal/products", label: "Insurance Products", icon: ShieldCheck, end: true },
 ];
 
 function MobileDrawer({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {

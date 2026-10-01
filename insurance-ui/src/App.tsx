@@ -13,6 +13,8 @@ import { PortalAuthProvider } from "./portal/context/PortalAuthContext";
 import { PortalLayout } from "./portal/PortalLayout";
 import PortalLoginPage from "./portal/pages/PortalLoginPage";
 import PortalDashboardPage from "./portal/pages/PortalDashboardPage";
+import PortalApplicationsPage from "./portal/pages/PortalApplicationsPage";
+import PortalNewApplicationPage from "./portal/pages/PortalNewApplicationPage";
 import PortalApplicationDetailPage from "./portal/pages/PortalApplicationDetailPage";
 import PortalProductsPage from "./portal/pages/PortalProductsPage";
 
@@ -55,6 +57,8 @@ export default function App() {
                     <Route path="login" element={<PortalLoginPage />} />
                     <Route element={<PortalLayout />}>
                       <Route index element={<PortalDashboardPage />} />
+                      <Route path="applications" element={<PortalApplicationsPage />} />
+                      <Route path="applications/new" element={<PortalNewApplicationPage />} />
                       <Route path="applications/:id" element={<PortalApplicationDetailPage />} />
                       <Route path="products" element={<PortalProductsPage />} />
                     </Route>

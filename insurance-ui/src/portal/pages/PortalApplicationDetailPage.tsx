@@ -39,7 +39,7 @@ export default function PortalApplicationDetailPage() {
     return (
       <div className="py-16 text-center">
         <p className="text-sm font-medium text-slate-700">Application not found</p>
-        <Link to="/portal" className="mt-2 inline-block text-sm text-brand-600 hover:text-brand-700">
+        <Link to="/portal/applications" className="mt-2 inline-block text-sm text-brand-600 hover:text-brand-700">
           Back to my applications
         </Link>
       </div>
@@ -64,7 +64,7 @@ export default function PortalApplicationDetailPage() {
 
   return (
     <div>
-      <Link to="/portal" className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/portal/applications" className="mb-4 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700">
         <ArrowLeft className="size-4" /> Back to my applications
       </Link>
 
